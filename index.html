@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Daily Task Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B4B43">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tracker">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F3; --surface:#FFFFFF; --ink:#151E1C; --ink-soft:#5C6663; --line:#E4E7E2;
+    --accent:#1B4B43; --accent-soft:#E6EEEC;
+    --pending:#7C8B89; --solved:#2F9E6E; --delivered:#2F6FED; --cancel:#E4572E; --chargeback:#C0392B; --partial:#C98A1F;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter','Noto Sans Bengali',sans-serif;padding-bottom:40px;min-height:100vh;}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 14px 0;}
+  header{padding:6px 2px 18px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .eyebrow{font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  h1{font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;font-size:26px;margin:4px 0 2px;font-weight:700;letter-spacing:-0.01em;}
+  .sub{color:var(--ink-soft);font-size:13.5px;}
+  .gear{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;width:38px;height:38px;font-size:17px;cursor:pointer;flex:0 0 auto;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+  #addForm{margin-bottom:16px;}
+  #addForm .row{display:flex;flex-direction:column;gap:10px;}
+  label{font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;display:block;}
+  input[type=text], input[type=url], textarea, select{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px;
+    font-family:inherit;background:#FCFDFC;color:var(--ink);outline:none;transition:border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--accent);}
+  textarea{resize:vertical;min-height:52px;}
+  .field{margin-bottom:2px;}
+  #addBtn{
+    margin-top:4px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:13px;font-size:15px;font-weight:600;font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;cursor:pointer;
+  }
+  #addBtn:disabled{opacity:.55;}
+  .tabs{display:flex;gap:7px;overflow-x:auto;padding:14px 0 12px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;padding:7px 13px;border-radius:999px;font-size:12.5px;font-weight:600;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);white-space:nowrap;cursor:pointer;}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  #list{display:flex;flex-direction:column;gap:10px;}
+  .task{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pending);border-radius:12px;padding:13px 14px;}
+  .task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .proj{font-weight:700;font-size:15px;font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;}
+  .issue{font-size:13.5px;color:var(--ink-soft);margin-top:3px;line-height:1.4;white-space:pre-wrap;}
+  .del{border:none;background:none;color:#B7BFBB;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px;}
+  .task-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:11px;flex-wrap:wrap;gap:8px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:600;border:none;cursor:pointer;color:#fff;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.85;}
+  .meta{font-size:11px;color:#9AA3A0;}
+  .chips{display:none;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
+  .chips.open{display:flex;}
+  .chip{padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:600;border:1.5px solid var(--line);background:#FCFDFC;color:var(--ink-soft);cursor:pointer;}
+  .chip.current{border-color:transparent;color:#fff;}
+  .empty{text-align:center;color:var(--ink-soft);font-size:13.5px;padding:36px 10px;}
+  .empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px;font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;}
+  .counts{font-size:11px;color:#9AA3A0;margin-top:2px;}
+  .banner{background:#FFF4E5;border:1px solid #F0CE95;color:#8A5A00;font-size:12.5px;padding:9px 12px;border-radius:10px;margin-bottom:14px;display:none;}
+  .banner.show{display:block;}
+
+  /* setup overlay */
+  #setup{position:fixed;inset:0;background:rgba(21,30,28,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;}
+  #setup.hide{display:none;}
+  .sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px 18px 24px;}
+  .sheet h2{font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;font-size:19px;margin:0 0 6px;}
+  .sheet p{font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin:0 0 14px;}
+  .sheet button.primary{width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px;font-weight:600;font-family:'Space Grotesk','Noto Sans Bengali',sans-serif;font-size:15px;cursor:pointer;margin-top:12px;}
+
+  @media(min-width:640px){
+    #addForm .row{flex-direction:row;flex-wrap:wrap;}
+    #addForm .field.proj-f{flex:1 1 220px;}
+    #addForm .field.issue-f{flex:1 1 100%;}
+    #addForm .field.status-f{flex:0 0 200px;}
+    #addBtn{flex:0 0 auto;width:auto;padding:11px 22px;align-self:flex-end;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Ops · Daily Log</div>
+      <h1>Task &amp; Issue Tracker</h1>
+      <div class="sub" id="dateLine"></div>
+    </div>
+    <button class="gear" id="gearBtn" title="Settings">⚙️</button>
+  </header>
+
+  <div class="banner" id="errBanner"></div>
+
+  <div class="card" id="addForm">
+    <div class="row">
+      <div class="field proj-f">
+        <label>Project Name</label>
+        <input type="text" id="projInput" placeholder="e.g. MindRise AI">
+      </div>
+      <div class="field issue-f">
+        <label>Issue / Note</label>
+        <textarea id="issueInput" placeholder="Short description of the issue..."></textarea>
+      </div>
+      <div class="field status-f">
+        <label>Status</label>
+        <select id="statusInput"></select>
+      </div>
+    </div>
+    <button id="addBtn">+ Add Task</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="counts" id="counts"></div>
+  <div id="list"></div>
+</div>
+
+<div id="setup">
+  <div class="sheet">
+    <h2>Connect your Sheet</h2>
+    <p>Paste the Google Apps Script Web App URL you got after deploying (ends in <code>/exec</code>). This links the tracker to your own Google Sheet — no Claude account needed.</p>
+    <input type="url" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="primary" id="saveUrlBtn">Connect</button>
+  </div>
+</div>
+
+<script>
+const STATUSES = [
+  {key:'pending',        label:'Pending',         color:'#7C8B89'},
+  {key:'solved',         label:'Solved',          color:'#2F9E6E'},
+  {key:'delivered',      label:'Delivered',       color:'#2F6FED'},
+  {key:'cancel',         label:'Cancel',          color:'#E4572E'},
+  {key:'chargeback',     label:'Chargeback',      color:'#C0392B'},
+  {key:'partial_refund', label:'Partial Refund',  color:'#C98A1F'}
+];
+const statusMap = Object.fromEntries(STATUSES.map(s=>[s.key,s]));
+
+let tasks = [];
+let activeFilter = 'all';
+let openChipsId = null;
+let SCRIPT_URL = localStorage.getItem('sheetApiUrl') || '';
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' · ' +
+         d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function setDateLine(){
+  document.getElementById('dateLine').textContent =
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function populateStatusSelect(){
+  document.getElementById('statusInput').innerHTML =
+    STATUSES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+}
+function escapeHtml(str){
+  const d = document.createElement('div'); d.textContent = str||''; return d.innerHTML;
+}
+function showError(msg){
+  const b = document.getElementById('errBanner');
+  b.textContent = msg; b.classList.add('show');
+}
+function clearError(){
+  document.getElementById('errBanner').classList.remove('show');
+}
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  const all = [{key:'all',label:'All'}, ...STATUSES];
+  tabs.innerHTML = all.map(s=>{
+    const count = s.key==='all' ? tasks.length : tasks.filter(t=>t.status===s.key).length;
+    return `<div class="tab ${activeFilter===s.key?'active':''}" data-key="${s.key}">${s.label} (${count})</div>`;
+  }).join('');
+  tabs.querySelectorAll('.tab').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeFilter = el.dataset.key; render(); });
+  });
+}
+
+function render(){
+  renderTabs();
+  const list = document.getElementById('list');
+  const filtered = tasks
+    .filter(t => activeFilter==='all' ? true : t.status===activeFilter)
+    .sort((a,b)=> new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  document.getElementById('counts').textContent = `${filtered.length} of ${tasks.length} shown`;
+
+  if(filtered.length===0){
+    list.innerHTML = `<div class="empty"><b>Nothing here yet</b>Add a task above, or switch filters.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t=>{
+    const s = statusMap[t.status] || statusMap.pending;
+    const chipsOpen = openChipsId===t.id;
+    return `
+    <div class="task" style="border-left-color:${s.color}" data-id="${t.id}">
+      <div class="task-top">
+        <div>
+          <div class="proj">${escapeHtml(t.project)}</div>
+          ${t.issue ? `<div class="issue">${escapeHtml(t.issue)}</div>` : ''}
+        </div>
+        <button class="del" data-action="delete" data-id="${t.id}">×</button>
+      </div>
+      <div class="task-bottom">
+        <button class="pill" style="background:${s.color}" data-action="toggle" data-id="${t.id}">
+          <span class="dot"></span>${s.label}
+        </button>
+        <span class="meta">updated ${fmtDate(t.updatedAt)}</span>
+      </div>
+      <div class="chips ${chipsOpen?'open':''}">
+        ${STATUSES.map(st=>`
+          <div class="chip ${st.key===t.status?'current':''}"
+               style="${st.key===t.status?`background:${st.color}`:''}"
+               data-action="setstatus" data-id="${t.id}" data-status="${st.key}">
+            ${st.label}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---- API calls to Google Apps Script ---- */
+async function apiList(){
+  const res = await fetch(SCRIPT_URL, {method:'GET'});
+  if(!res.ok) throw new Error('list failed');
+  const data = await res.json();
+  return data.tasks || [];
+}
+async function apiAdd(task){
+  const res = await fetch(SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'add', project:task.project, issue:task.issue, status:task.status})
+  });
+  return res.json();
+}
+async function apiUpdateStatus(id, status){
+  const res = await fetch(SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'update_status', id, status})
+  });
+  return res.json();
+}
+async function apiDelete(id){
+  const res = await fetch(SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action:'delete', id})
+  });
+  return res.json();
+}
+
+async function loadTasks(){
+  clearError();
+  try{
+    tasks = await apiList();
+    render();
+  }catch(e){
+    showError('Sheet এর সাথে connect করা যায়নি — settings (⚙️) থেকে URL চেক করো।');
+  }
+}
+
+document.getElementById('addBtn').addEventListener('click', async ()=>{
+  const projInput = document.getElementById('projInput');
+  const issueInput = document.getElementById('issueInput');
+  const statusInput = document.getElementById('statusInput');
+  const project = projInput.value.trim();
+  if(!project){ projInput.focus(); return; }
+  const btn = document.getElementById('addBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try{
+    await apiAdd({project, issue: issueInput.value.trim(), status: statusInput.value});
+    projInput.value=''; issueInput.value=''; statusInput.value='pending';
+    await loadTasks();
+  }catch(e){
+    showError('Add করা যায়নি, connection চেক করো।');
+  }finally{
+    btn.disabled = false; btn.textContent = '+ Add Task';
+  }
+});
+
+document.getElementById('list').addEventListener('click', async (e)=>{
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const id = el.dataset.id;
+  const action = el.dataset.action;
+
+  if(action==='delete'){
+    if(!confirm('Delete this task?')) return;
+    try{ await apiDelete(id); await loadTasks(); }
+    catch(e){ showError('Delete করা যায়নি।'); }
+  }
+  if(action==='toggle'){
+    openChipsId = openChipsId===id ? null : id;
+    render();
+  }
+  if(action==='setstatus'){
+    openChipsId = null;
+    try{ await apiUpdateStatus(id, el.dataset.status); await loadTasks(); }
+    catch(e){ showError('Status update করা যায়নি।'); }
+  }
+});
+
+/* ---- Setup overlay ---- */
+const setupEl = document.getElementById('setup');
+function openSetup(){ document.getElementById('urlInput').value = SCRIPT_URL; setupEl.classList.remove('hide'); }
+function closeSetup(){ setupEl.classList.add('hide'); }
+
+document.getElementById('gearBtn').addEventListener('click', openSetup);
+document.getElementById('saveUrlBtn').addEventListener('click', ()=>{
+  const val = document.getElementById('urlInput').value.trim();
+  if(!val.startsWith('https://script.google.com/')){
+    alert('সঠিক Apps Script URL দাও (script.google.com দিয়ে শুরু হবে)');
+    return;
+  }
+  SCRIPT_URL = val;
+  localStorage.setItem('sheetApiUrl', val);
+  closeSetup();
+  loadTasks();
+});
+
+populateStatusSelect();
+setDateLine();
+if(SCRIPT_URL){ closeSetup(); loadTasks(); } else { openSetup(); }
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
